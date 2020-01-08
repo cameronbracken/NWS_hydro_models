@@ -127,7 +127,7 @@ end subroutine write_uh_state
 
 ! CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC 
 
-subroutine read_uh_state(state_date_str, prior_tci,uh_length,curr_hru_id)
+subroutine read_uh_state(state_date_str, prior_tci, curr_hru_id)
   ! A.Wood, 2016 -- just read prior (uh_length) values ending at timestep-1 for tci
   !   includes ability to read a keyword in state file to identify desired state
   !   rather than match the date
@@ -139,7 +139,6 @@ subroutine read_uh_state(state_date_str, prior_tci,uh_length,curr_hru_id)
   !input variable
   character(len=10), intent(in) :: state_date_str  ! AWW string to match date in input states
   character(len=20), intent(in) :: curr_hru_id	! HRU extension for state fname
-  integer(I4B), intent(in)	:: uh_length
 
   !output variables
   real(sp), dimension(:), intent(out) 	:: prior_tci
@@ -376,7 +375,7 @@ subroutine read_sac_params(param_file_name,n_hrus)
   use nrtype
   use def_namelists, only: uztwm,uzfwm,uzk,pctim,adimp,zperc,rexp, &
 			lztwm,lzfsm,lzfpm,lzsk,lzpk,pfree,riva,side,rserv, &
-                        hru_area, hru_id
+                        hru_area, hru_id, peadj, pxadj
   implicit none
  
   !input variables
@@ -412,6 +411,8 @@ subroutine read_sac_params(param_file_name,n_hrus)
   allocate(riva(n_hrus))
   allocate(side(n_hrus))
   allocate(rserv(n_hrus))
+  allocate(peadj(n_hrus))
+  allocate(pxadj(n_hrus))
 
   print*, 'Reading Sac parameters'
 
@@ -485,6 +486,12 @@ subroutine read_sac_params(param_file_name,n_hrus)
         case('rserv')
           read(readline, *, iostat=ios) rserv
           n_params_read = n_params_read + 1
+        case('peadj')
+          read(readline, *, iostat=ios) peadj  ! peadj & pxadj are used by NWS to modify
+          n_params_read = n_params_read + 1    ! forcings before running models
+        case('pxadj')                          ! included here as sac params
+          read(readline, *, iostat=ios) pxadj  ! often used as calibration parameters in nwsrfs
+          n_params_read = n_params_read + 1
         case default
           print *, 'Parameter ',param,' not recognized in soil file'
           ! something weird here...doesn't break it but somehow enters here after last real read
@@ -496,8 +503,8 @@ subroutine read_sac_params(param_file_name,n_hrus)
   close(unit=50)
 
   ! quick check on completeness
-  if(n_params_read /= 18) then
-    print *, 'Only ',n_params_read, ' SAC params read, but need 18.  Quitting...'
+  if(n_params_read /= 20) then
+    print *, 'Only ',n_params_read, ' SAC params read, but need 20.  Quitting...'
     stop
   end if
   !print*, '  -------------------'

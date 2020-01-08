@@ -130,14 +130,13 @@ module interfaces
       real(sp), intent(out)	:: adimc		!state array
     end subroutine read_sac_state
 
-    subroutine read_uh_state(state_date_str, prior_tci,uh_length,curr_hru_id)
+    subroutine read_uh_state(state_date_str, prior_tci, curr_hru_id)
       use nrtype
       use def_namelists, only: uh_state_in_root
       implicit none
       !input variables
       character(len = 10), intent(in) :: state_date_str  ! AWW string to match date in input states
       character(len = 20), intent(in) :: curr_hru_id	! HRU extension for state fname
-      integer(I4B), intent(in)	:: uh_length
       !output variables
       real(sp), dimension(:), intent(out) 	:: prior_tci
     end subroutine read_uh_state
@@ -163,7 +162,8 @@ module interfaces
     subroutine read_sac_params(param_name,n_hrus)
       use nrtype
       use def_namelists, only: uztwm,uzfwm,uzk,pctim,adimp,zperc,rexp, &
-			    lztwm,lzfsm,lzfpm,lzsk,lzpk,pfree,riva,side,rserv
+			    lztwm,lzfsm,lzfpm,lzsk,lzpk,pfree,riva,side,rserv,&
+                            peadj,pxadj
       !input variables
       character(len=1024),intent(in)	:: param_name
       integer(I4B),intent(in) :: n_hrus

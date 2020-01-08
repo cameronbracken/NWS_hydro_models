@@ -42,7 +42,7 @@ module def_namelists
   real(dp), dimension(:), allocatable :: hru_area   ! sq-km, needed for combination & routing conv.
   real(sp), dimension(:), allocatable :: uztwm,uzfwm,uzk,pctim,adimp,zperc,rexp
   real(sp), dimension(:), allocatable :: lztwm,lzfsm,lzfpm,lzsk,lzpk,pfree
-  real(sp), dimension(:), allocatable :: riva,side,rserv
+  real(sp), dimension(:), allocatable :: riva,side,rserv,peadj,pxadj
 
   ! UH params in the UH param file
   real(sp), dimension(:), allocatable :: unit_shape,unit_scale  !unit hydrograph parameters
@@ -61,6 +61,6 @@ module def_namelists
                           init_lzfpc,init_adimc,sac_param_file,snow17_param_file,uh_param_file, &
                           uh_state_in_root, warm_start_run, write_states, &
 			  snow_state_out_root,sac_state_out_root,snow_state_in_root, &
-			  sac_state_in_root, uh_state_out_root, elev, latitude, hru_id, hru_area
+			  sac_state_in_root, uh_state_out_root
   save
 end module

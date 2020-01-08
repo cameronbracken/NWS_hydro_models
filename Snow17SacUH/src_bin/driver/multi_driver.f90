@@ -25,6 +25,7 @@
 !                   of the write_state functions, and will seek a date that is one day before
 !                   the starting day of the run, since that contains end-of-day state values
 !   AWW-20161207: - fixed bug in uh_statefile write/read
+!   AWW-20170117: - added peadj and pxadj as sac parameters for model calibration
 ! 
 ! ====================================================================================
 
@@ -111,8 +112,8 @@ program multi_driver
   real(sp), dimension(:),allocatable :: raim
 
   ! atmospheric forcing variables
-  real(dp), dimension(:),allocatable :: tmin, tmax, precip, pet
-  real(dp), dimension(:),allocatable :: vpd, dayl, swdown ! used in pet calc if desired
+  real(dp), dimension(:),allocatable :: tmin, tmax, precip, pet, raw_precip, raw_pet
+  ! real(dp), dimension(:),allocatable :: vpd, dayl, swdown ! used in pet calc; not used currently
 
   ! derived forcing variables
   real(dp), dimension(:),allocatable :: tair
@@ -178,11 +179,13 @@ program multi_driver
       allocate(hour(sim_length))
       allocate(tmax(sim_length))
       allocate(tmin(sim_length))
-      allocate(vpd(sim_length))
-      allocate(dayl(sim_length))
-      allocate(swdown(sim_length))
-      allocate(precip(sim_length))
-      allocate(pet(sim_length))
+      ! allocate(vpd(sim_length))  ! not used now that PET supplied outside code
+      ! allocate(dayl(sim_length))
+      ! allocate(swdown(sim_length))
+      allocate(raw_precip(sim_length))  ! input values
+      allocate(precip(sim_length))      ! values after applying pxadj
+      allocate(raw_pet(sim_length))     ! input values
+      allocate(pet(sim_length))         ! values after applying peadj
       allocate(tair(sim_length))
   
       !sac-sma state variables
@@ -215,10 +218,15 @@ program multi_driver
     end if  ! end of IF case for allocating only when running the first simulation area
 
     ! read forcing data
-    call read_areal_forcing(year,month,day,hour,tmin,tmax,precip,pet,hru_id(nh)) ! hour not used
+    call read_areal_forcing(year,month,day,hour,tmin,tmax,raw_precip,raw_pet,hru_id(nh)) ! hour not used
     tair = (tmax+tmin)/2.0_dp  ! calculate derived variable (mean air temp)
                                ! tmax & tmin were used for pet earlier, this is vestigial but ok
 
+    ! apply PEADJ and PXADJ (scaling the input values)
+    pet    = raw_pet * peadj(nh)
+    precip = raw_precip * pxadj(nh)
+
+    ! print run dates
     print*, '  start:',year(1),month(1),day(1)
     print*, '    end:',year(sim_length),month(sim_length),day(sim_length) 
 
@@ -256,7 +264,7 @@ program multi_driver
       call read_snow17_state(state_date_str, cs, tprev, hru_id(nh))
       call read_sac_state(state_date_str, uztwc_sp, uzfwc_sp, lztwc_sp, lzfsc_sp, lzfpc_sp,&
                             adimc_sp, hru_id(nh))
-      call read_uh_state(state_date_str, prior_tci, uh_length, hru_id(nh))
+      call read_uh_state(state_date_str, prior_tci, hru_id(nh))
       ! pre-pend TCI from prior simulation to expanded tci that will get routed
       expanded_tci(1:uh_length-1) = prior_tci(2:uh_length)  ! 1st value not used
 
@@ -501,7 +509,8 @@ program multi_driver
 
   if(routing_flag == 1) then
 
-    write(125,'(A)') 'year mo dy hr tair pcp pcp*scf swe raim pet eta uztwc uzfwc lztwc lzfsc lzfpc adimc sim_runoff sim_flow_mmd sim_flow_cfs'
+    write(125,'(A)') &
+      & 'year mo dy hr tair pcp pcp*scf swe raim pet eta uztwc uzfwc lztwc lzfsc lzfpc adimc sim_runoff sim_flow_mmd sim_flow_cfs'
     do i = 1,sim_length
       write(125,33) year(i),month(i),day(i),hour(i),tair_comb(i),precip_comb(i),precip_scf_comb(i),&
                        sneqv_comb(i)*1000.,raim_comb(i),pet_comb(i),eta_comb(i),uztwc_comb(i),uzfwc_comb(i),&
@@ -510,7 +519,7 @@ program multi_driver
     end do
 
   else  
-    ! doesn't have routing (header and data have fewer 
+    ! doesn't have routing (header and data have fewer fields)
     write(125,'(A)') 'year mo dy hr tair pcp pcp*scf swe raim pet eta uztwc uzfwc lztwc lzfsc lzfpc adimc sim_runoff'
     do i = 1,sim_length
       write(125,34) year(i),month(i),day(i),hour(i),tair_comb(i),precip_comb(i),precip_scf_comb(i),&
