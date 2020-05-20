@@ -79,7 +79,7 @@ program multi_driver
   real(sp),dimension(:,:),allocatable  :: cs_states       ! for state file write
 
   ! unit hydrograph
-  real(sp),dimension(50)  :: unit_hydro ! in time steps ... this dim sets UH_LENGTH: 
+  real(sp),dimension(200)  :: unit_hydro ! in time steps ... this dim sets UH_LENGTH: 
                                         ! could cause truncation if UH is very long
                                         ! needs to match setting in duamel
 
@@ -140,8 +140,8 @@ program multi_driver
     i = i + 1
   end do
 
-  ! set model timestep (DO NOT CHANGE in this daily modeling code version )
-  dt = 86400 ! (s) model timestep (86400 seconds = 1 day)
+  ! set model timestep 
+  dt = 21600 ! (s) model timestep (86400 seconds = 1 day)
 
   ! read namelist file to get info on the current simulation areas
   call read_namelist(namelist_name)
@@ -175,6 +175,10 @@ program multi_driver
       ! get sim length to use in allocating variables (AWW new routine)
       call date_diff_ndays(start_year,start_month,start_day,end_year,end_month,end_day,sim_length)
      
+      ! for 6 hour timestep
+      ! for simplicity don't consider partial days
+      sim_length = sim_length * (86400/dt)
+
       !forcing variables
       allocate(year(sim_length))
       allocate(month(sim_length))
@@ -225,15 +229,14 @@ program multi_driver
     call read_areal_forcing(year,month,day,hour,tmin,tmax,raw_precip,raw_pet,psfall,hru_id(nh)) ! hour not used
     tair = (tmax+tmin)/2.0_dp  ! calculate derived variable (mean air temp)
                                ! tmax & tmin were used for pet earlier, this is vestigial but ok
-    write(*,*)psfall(1)
 
     ! apply PEADJ and PXADJ (scaling the input values)
     pet    = raw_pet * peadj(nh)
     precip = raw_precip * pxadj(nh)
 
     ! print run dates
-    print*, '  start:',year(1),month(1),day(1)
-    print*, '    end:',year(sim_length),month(sim_length),day(sim_length) 
+    print*, '  start:',year(1),month(1),day(1),hour(1)
+    print*, '    end:',year(sim_length),month(sim_length),day(sim_length), hour(sim_length)
 
     ! ================== RUN models for huc_area! ==========================================
   
@@ -482,7 +485,7 @@ program multi_driver
   end do   ! ========== END of simulation areas loop   ====================
 
   ! ====== print combined simulation output ============
-  print*, 'Sim_length (days) =',sim_length
+  print*, 'Sim_length (days) =',sim_length/(86400/dt)
   print*, '--------------------------------------------------------------'
 
   combined_output_filename = trim(output_root) // trim(main_id)

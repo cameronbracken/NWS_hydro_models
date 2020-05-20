@@ -1,7 +1,7 @@
 &INIT_CONTROL
 main_id           = "HHWM8" ! basin or gage id 
 n_hrus            = 2 ! number of sub-areas in model
-forcing_root      = "../input/forcing/forcing_pet.mixed_ens."
+forcing_root      = "../input/forcing/forcing_pet.mixed_ens.6hr."
 output_root       = "../output/wbvars.txt."
 sac_param_file    = "../input/params/sac_params.HHWM8.txt"
 snow17_param_file = "../input/params/snow17_params.HHWM8.txt"
@@ -11,9 +11,11 @@ output_hrus       = 0     ! output HRU results? (1=yes; 0=no)
 start_year  = 1970
 start_month = 1
 start_day   = 1
+start_hour  = 0
 end_year    = 2015
 end_month   = 12
 end_day     = 31
+end_hour    = 18
 
 ! starting states (for all zones -- could later move to param files if desired)
 init_swe    = 0.0	! initial swe in mm if not performing a warm start run

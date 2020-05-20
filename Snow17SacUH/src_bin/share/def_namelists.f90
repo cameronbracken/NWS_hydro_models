@@ -21,10 +21,12 @@ module def_namelists
   integer(I4B)		:: output_hrus 		! output HRU results? (1=yes; 0=no)
 
   integer(I4B)		:: start_month		! starting month 
+  integer(I4B)    :: start_hour    ! starting hour
   integer(I4B)		:: start_day		! starting day
   integer(I4B)		:: start_year		! starting year
   integer(I4B)		:: end_month		! ending month 
   integer(I4B)		:: end_day		! ending day
+  integer(I4B)    :: end_hour    ! ending day
   integer(I4B)		:: end_year		! ending year
   integer(I4B)		:: warm_start_run	! warm restart run flag
   integer(I4B)		:: write_states	        ! flag to write states for a warm start run
@@ -56,8 +58,8 @@ module def_namelists
 
   ! namelist elements to be shared
   namelist / INIT_CONTROL / forcing_root, output_root, main_id, n_hrus, output_hrus, &
-                          start_day,start_month,start_year,end_year,end_month, &
-                          end_day,init_swe,init_uztwc,init_uzfwc,init_lztwc,init_lzfsc, &
+                          start_hour,start_day,start_month,start_year,end_year,end_month, &
+                          end_hour,end_day,init_swe,init_uztwc,init_uzfwc,init_lztwc,init_lzfsc, &
                           init_lzfpc,init_adimc,sac_param_file,snow17_param_file,uh_param_file, &
                           uh_state_in_root, warm_start_run, write_states, &
 			  snow_state_out_root,sac_state_out_root,snow_state_in_root, &

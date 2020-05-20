@@ -294,7 +294,7 @@ end subroutine read_sac_state
 subroutine read_areal_forcing(year,month,day,hour,tmin,tmax,precip,pet,psfall,curr_hru_id)
   use nrtype
   use def_namelists, only: forcing_root, start_year,start_day,start_month, &
-                        end_year,end_month,end_day
+                        end_year,end_month,end_day,start_hour,end_hour
 
   implicit none
 
@@ -340,7 +340,8 @@ subroutine read_areal_forcing(year,month,day,hour,tmin,tmax,precip,pet,psfall,cu
     ! forcing could have any format, nice!
     read (UNIT=50,FMT=*,IOSTAT=ios) yr,mnth,dy,hr,pcp,tma,tmn,pm_pet,pcts
 
-    if(yr .eq. start_year .and. mnth .eq. start_month .and. dy .eq. start_day) then
+    if(yr .eq. start_year .and. mnth .eq. start_month .and. dy .eq. start_day &
+       .and. hr .eq. start_hour) then
       read_flag = 1
     end if
 
@@ -358,7 +359,8 @@ subroutine read_areal_forcing(year,month,day,hour,tmin,tmax,precip,pet,psfall,cu
       i = i + 1
     end if
 
-    if(yr .eq. end_year .and. mnth .eq. end_month .and. dy .eq. end_day) then
+    if(yr .eq. end_year .and. mnth .eq. end_month .and. dy .eq. end_day &
+      .and. hr .eq. end_hour) then
       read_flag = 2
     end if
 
