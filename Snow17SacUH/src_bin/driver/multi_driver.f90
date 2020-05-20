@@ -69,6 +69,7 @@ program multi_driver
   real(sp)	:: pet_sp
   real(sp)	:: tair_sp
   real(sp)	:: precip_sp
+  real(sp)  :: psfall_sp
 
   ! snow-17 carry over variables
   real(dp)                :: pa       ! snow-17 surface pressure
@@ -113,6 +114,7 @@ program multi_driver
 
   ! atmospheric forcing variables
   real(dp), dimension(:),allocatable :: tmin, tmax, precip, pet, raw_precip, raw_pet
+  real(dp), dimension(:),allocatable :: psfall
   ! real(dp), dimension(:),allocatable :: vpd, dayl, swdown ! used in pet calc; not used currently
 
   ! derived forcing variables
@@ -125,6 +127,7 @@ program multi_driver
   real(sp), dimension(:),allocatable :: raim_comb  ! AWW combined vars
   real(dp), dimension(:),allocatable :: precip_comb, precip_scf_comb ! AWW combined vars
   real(dp), dimension(:),allocatable :: pet_comb, tair_comb  ! AWW combined vars
+  real(dp), dimension(:),allocatable :: psfall_comb
 
   ! =======  CODE starts below =====================================================================
 
@@ -187,6 +190,7 @@ program multi_driver
       allocate(raw_pet(sim_length))     ! input values
       allocate(pet(sim_length))         ! values after applying peadj
       allocate(tair(sim_length))
+      allocate(psfall(sim_length)) 
   
       !sac-sma state variables
       allocate(uztwc_dp(sim_length))
@@ -218,9 +222,10 @@ program multi_driver
     end if  ! end of IF case for allocating only when running the first simulation area
 
     ! read forcing data
-    call read_areal_forcing(year,month,day,hour,tmin,tmax,raw_precip,raw_pet,hru_id(nh)) ! hour not used
+    call read_areal_forcing(year,month,day,hour,tmin,tmax,raw_precip,raw_pet,psfall,hru_id(nh)) ! hour not used
     tair = (tmax+tmin)/2.0_dp  ! calculate derived variable (mean air temp)
                                ! tmax & tmin were used for pet earlier, this is vestigial but ok
+    write(*,*)psfall(1)
 
     ! apply PEADJ and PXADJ (scaling the input values)
     pet    = raw_pet * peadj(nh)
@@ -277,10 +282,11 @@ program multi_driver
       tair_sp   = real(tair(i),kind(sp))
       precip_sp = real(precip(i),kind(sp))
       pet_sp    = real(pet(i),kind(sp))
+      psfall_sp = real(psfall(i),kind(sp))
    
       call exsnow19(int(dt),int(dt/sec_hour),day(i),month(i),year(i),&
   	!SNOW17 INPUT AND OUTPUT VARIABLES
-  	  precip_sp,tair_sp,raim(i),sneqv(i),snow(i),snowh(i),&
+  	  precip_sp,psfall_sp,tair_sp,raim(i),sneqv(i),snow(i),snowh(i),&
   	!SNOW17 PARAMETERS
           !ALAT,SCF,MFMAX,MFMIN,UADJ,SI,NMF,TIPM,MBASE,PXTEMP,PLWHC,DAYGM,ELEV,PA,ADC
   	  real(latitude(nh),kind(sp)),scf(nh),mfmax(nh),mfmin(nh),uadj(nh),si(nh),nmf(nh),&
@@ -373,15 +379,16 @@ program multi_driver
       open(unit=45,FILE=trim(hru_output_filename),FORM='formatted',status='replace')  ! output file open
   
       ! print header first
-      write(45,'(A)') 'year mo dy hr tair pcp pcp*scf swe raim pet eta uztwc uzfwc lztwc lzfsc lzfpc adimc sim_runoff sim_flow_mmd'
+      write(45,'(A)') 'year mo dy hr tair pcp pcp*scf swe raim pet psfall &
+      &eta uztwc uzfwc lztwc lzfsc lzfpc adimc sim_runoff sim_flow_mmd'
   
-      31 FORMAT(I4.4, 3(1x,I2.2),7(F8.2),6(F8.2),3(F9.2),2(F10.3),F9.1)  ! AWW: goes with update
-      32 FORMAT(I4.4, 3(1x,I2.2),7(F8.2),6(F8.2),2(F9.2),2(F10.3),F9.1)  ! AWW: one fewer field (routed tci)
+      31 FORMAT(I4.4, 3(1x,I2.2),8(F8.2),6(F8.2),3(F9.2),2(F10.3),F9.1)  ! AWW: goes with update
+      32 FORMAT(I4.4, 3(1x,I2.2),8(F8.2),6(F8.2),2(F9.2),2(F10.3),F9.1)  ! AWW: one fewer field (routed tci)
 
       do i = 1,sim_length
         if (routing_flag == 1) then
           write(45,31) year(i),month(i),day(i),hour(i),tair(i),precip(i),precip(i)*scf(nh),&
-                       sneqv(i)*1000.,raim(i),pet(i),eta(i),uztwc_dp(i),uzfwc_dp(i),&
+                       sneqv(i)*1000.,raim(i),pet(i),psfall(i),eta(i),uztwc_dp(i),uzfwc_dp(i),&
                        lztwc_dp(i),lzfsc_dp(i),lzfpc_dp(i),adimc_dp(i),tci(i),route_tci(i)
         else
           ! AWW originally this was the same as above, but I think the routed flow needed removing
@@ -413,6 +420,7 @@ program multi_driver
       allocate(sneqv_comb(sim_length))
       allocate(raim_comb(sim_length))
       allocate(pet_comb(sim_length))
+      allocate(psfall_comb(sim_length))
       allocate(eta_comb(sim_length))
       allocate(uztwc_comb(sim_length))
       allocate(uzfwc_comb(sim_length))
@@ -433,6 +441,7 @@ program multi_driver
       sneqv_comb      = sneqv * hru_area(nh) 
       raim_comb       = raim * hru_area(nh)
       pet_comb        = pet * hru_area(nh)
+      psfall_comb     = psfall * hru_area(nh)
       eta_comb        = eta * hru_area(nh)
       uztwc_comb      = uztwc_dp * hru_area(nh) 
       uzfwc_comb      = uzfwc_dp * hru_area(nh) 
@@ -455,6 +464,7 @@ program multi_driver
       sneqv_comb      = sneqv_comb + sneqv * hru_area(nh) 
       raim_comb       = raim_comb + raim * hru_area(nh)
       pet_comb        = pet_comb + pet * hru_area(nh)
+      psfall_comb     = psfall_comb + psfall * hru_area(nh)
       eta_comb        = eta_comb + eta * hru_area(nh)
       uztwc_comb      = uztwc_comb + uztwc_dp * hru_area(nh) 
       uzfwc_comb      = uzfwc_comb + uzfwc_dp * hru_area(nh) 
@@ -485,6 +495,7 @@ program multi_driver
   sneqv_comb      = sneqv_comb / total_area
   raim_comb       = raim_comb / total_area
   pet_comb        = pet_comb / total_area
+  psfall_comb     = psfall_comb / total_area
   eta_comb        = eta_comb / total_area
   uztwc_comb      = uztwc_comb / total_area
   uzfwc_comb      = uzfwc_comb / total_area
@@ -504,26 +515,27 @@ program multi_driver
   open(unit=125,FILE=trim(combined_output_filename),FORM='formatted',status='replace')
   
   ! print header & data (diffence if there's routing or not)
-  33 FORMAT(I4.4, 3(1x,I2.2),3(F8.2),F9.2,F8.2,2(F8.2),6(F9.2),2(F10.3),F12.2) ! AWW: 1 more field (cfs) than orig
-  34 FORMAT(I4.4, 3(1x,I2.2),3(F8.2),F9.2,F8.2,2(F8.2),4(F9.2),2(F10.3),F9.1)  ! AWW: two fewer fields (not routed)
+  33 FORMAT(I4.4, 3(1x,I2.2),3(F12.2),F12.2,F12.2,3(F12.2),6(F12.2),2(F12.3),F12.2) ! AWW: 1 more field (cfs) than orig
+  34 FORMAT(I4.4, 3(1x,I2.2),3(F12.2),F12.2,F12.2,3(F12.2),4(F12.2),2(F12.3),F12.1)  ! AWW: two fewer fields (not routed)
 
   if(routing_flag == 1) then
 
-    write(125,'(A)') &
-      & 'year mo dy hr tair pcp pcp*scf swe raim pet eta uztwc uzfwc lztwc lzfsc lzfpc adimc sim_runoff sim_flow_mmd sim_flow_cfs'
+    write(125,'(A)') 'year mo dy hr tair pcp pcp*scf swe raim pet psfall &
+    &eta uztwc uzfwc lztwc lzfsc lzfpc adimc sim_runoff sim_flow_mmd sim_flow_cfs'
     do i = 1,sim_length
       write(125,33) year(i),month(i),day(i),hour(i),tair_comb(i),precip_comb(i),precip_scf_comb(i),&
-                       sneqv_comb(i)*1000.,raim_comb(i),pet_comb(i),eta_comb(i),uztwc_comb(i),uzfwc_comb(i),&
+                       sneqv_comb(i)*1000.,raim_comb(i),pet_comb(i),psfall_comb(i),eta_comb(i),uztwc_comb(i),uzfwc_comb(i),&
                        lztwc_comb(i),lzfsc_comb(i),lzfpc_comb(i),adimc_comb(i),&
                        tci_comb(i),route_tci_comb(i),route_tci_cfs(i)
     end do
 
   else  
     ! doesn't have routing (header and data have fewer fields)
-    write(125,'(A)') 'year mo dy hr tair pcp pcp*scf swe raim pet eta uztwc uzfwc lztwc lzfsc lzfpc adimc sim_runoff'
+    write(125,'(A)') 'year mo dy hr tair pcp pcp*scf swe raim pet psfall &
+    &eta uztwc uzfwc lztwc lzfsc lzfpc adimc sim_runoff'
     do i = 1,sim_length
       write(125,34) year(i),month(i),day(i),hour(i),tair_comb(i),precip_comb(i),precip_scf_comb(i),&
-                       sneqv_comb(i)*1000.,raim_comb(i),pet_comb(i),eta_comb(i),uztwc_comb(i),uzfwc_comb(i),&
+                       sneqv_comb(i)*1000.,raim_comb(i),pet_comb(i),psfall_comb(i),eta_comb(i),uztwc_comb(i),uzfwc_comb(i),&
                        lztwc_comb(i),lzfsc_comb(i),lzfpc_comb(i),adimc_comb(i),tci_comb(i)
     end do
   endif  
