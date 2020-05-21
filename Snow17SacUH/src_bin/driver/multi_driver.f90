@@ -502,7 +502,7 @@ program multi_driver
   adimc_comb      = adimc_comb / total_area
   tci_comb        = tci_comb / total_area
   if(routing_flag == 1) then
-    route_tci_cfs   = route_tci_comb * 1000 * 3.28084**3 / (24*3600)  ! mmd*total_area to cfs
+    route_tci_cfs   = route_tci_comb * 1000 * 3.28084**3 / dt  ! mm/timestep*total_area to cfs
     route_tci_comb  = route_tci_comb / total_area  ! mm/d
   end if
 
