@@ -49,10 +49,6 @@ program multi_driver
   character(len=2000)	:: hru_output_filename  ! AWW constructed on the fly
   character(len=10)	:: state_date_str  ! AWW string to match date in input states
 
-  integer(I4B) :: dt           ! model timestep (seconds)
-                               ! moved here from namelist until model can be validated at 
-                               ! other than a daily timestep (86400 s)
-
   integer      :: nh           ! AWW index for looping through areas
   real(dp)     :: total_area   ! (sqkm) AWW needed for combining outputs
   integer(I4B) :: i, ntau, k, m
@@ -140,9 +136,6 @@ program multi_driver
     i = i + 1
   end do
 
-  ! set model timestep 
-  dt = 21600 ! (s) model timestep (86400 seconds = 1 day)
-
   ! read namelist file to get info on the current simulation areas
   call read_namelist(namelist_name)
 
@@ -175,8 +168,9 @@ program multi_driver
       ! get sim length to use in allocating variables (AWW new routine)
       call date_diff_ndays(start_year,start_month,start_day,end_year,end_month,end_day,sim_length)
      
-      ! for 6 hour timestep
+      ! for non-daily timestep
       ! for simplicity don't consider partial days
+      ! dt is defined in the namelist
       sim_length = sim_length * (86400/dt)
 
       !forcing variables

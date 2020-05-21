@@ -20,6 +20,8 @@ module def_namelists
   character(len = 1024)	:: sac_state_in_root	! name for sac state input root
   integer(I4B)		:: output_hrus 		! output HRU results? (1=yes; 0=no)
 
+  integer(I4B)    :: dt    ! model timestep in seconds
+
   integer(I4B)		:: start_month		! starting month 
   integer(I4B)    :: start_hour    ! starting hour
   integer(I4B)		:: start_day		! starting day
@@ -59,7 +61,7 @@ module def_namelists
   ! namelist elements to be shared
   namelist / INIT_CONTROL / forcing_root, output_root, main_id, n_hrus, output_hrus, &
                           start_hour,start_day,start_month,start_year,end_year,end_month, &
-                          end_hour,end_day,init_swe,init_uztwc,init_uzfwc,init_lztwc,init_lzfsc, &
+                          end_hour,end_day,dt,init_swe,init_uztwc,init_uzfwc,init_lztwc,init_lzfsc, &
                           init_lzfpc,init_adimc,sac_param_file,snow17_param_file,uh_param_file, &
                           uh_state_in_root, warm_start_run, write_states, &
 			  snow_state_out_root,sac_state_out_root,snow_state_in_root, &
