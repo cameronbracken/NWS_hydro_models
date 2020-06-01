@@ -26,6 +26,8 @@
 !                   the starting day of the run, since that contains end-of-day state values
 !   AWW-20161207: - fixed bug in uh_statefile write/read
 !   AWW-20170117: - added peadj and pxadj as sac parameters for model calibration
+!   CWB-20200521: - Allow for the timestep to be specefied in the namelist 
+!                 - Input psfall (% snow fall) at each timestep
 ! 
 ! ====================================================================================
 
@@ -220,7 +222,7 @@ program multi_driver
     end if  ! end of IF case for allocating only when running the first simulation area
 
     ! read forcing data
-    call read_areal_forcing(year,month,day,hour,tmin,tmax,raw_precip,raw_pet,psfall,hru_id(nh)) ! hour not used
+    call read_areal_forcing(year,month,day,hour,tmin,tmax,raw_precip,raw_pet,psfall,hru_id(nh)) 
     tair = (tmax+tmin)/2.0_dp  ! calculate derived variable (mean air temp)
                                ! tmax & tmin were used for pet earlier, this is vestigial but ok
 
