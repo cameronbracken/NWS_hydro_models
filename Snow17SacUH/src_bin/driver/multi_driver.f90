@@ -28,6 +28,7 @@
 !   AWW-20170117: - added peadj and pxadj as sac parameters for model calibration
 !   CWB-20200521: - Allow for the timestep to be specefied in the namelist 
 !                 - Input psfall (% snow fall) at each timestep
+!   CWB-20200521: - Input only average temp for the timestep, not min and max
 ! 
 ! ====================================================================================
 
@@ -111,7 +112,7 @@ program multi_driver
   real(sp), dimension(:),allocatable :: raim
 
   ! atmospheric forcing variables
-  real(dp), dimension(:),allocatable :: tmin, tmax, precip, pet, raw_precip, raw_pet
+  real(dp), dimension(:),allocatable :: precip, pet, raw_precip, raw_pet
   real(dp), dimension(:),allocatable :: psfall
   ! real(dp), dimension(:),allocatable :: vpd, dayl, swdown ! used in pet calc; not used currently
 
@@ -180,11 +181,7 @@ program multi_driver
       allocate(month(sim_length))
       allocate(day(sim_length))
       allocate(hour(sim_length))
-      allocate(tmax(sim_length))
-      allocate(tmin(sim_length))
-      ! allocate(vpd(sim_length))  ! not used now that PET supplied outside code
-      ! allocate(dayl(sim_length))
-      ! allocate(swdown(sim_length))
+
       allocate(raw_precip(sim_length))  ! input values
       allocate(precip(sim_length))      ! values after applying pxadj
       allocate(raw_pet(sim_length))     ! input values
@@ -222,9 +219,7 @@ program multi_driver
     end if  ! end of IF case for allocating only when running the first simulation area
 
     ! read forcing data
-    call read_areal_forcing(year,month,day,hour,tmin,tmax,raw_precip,raw_pet,psfall,hru_id(nh)) 
-    tair = (tmax+tmin)/2.0_dp  ! calculate derived variable (mean air temp)
-                               ! tmax & tmin were used for pet earlier, this is vestigial but ok
+    call read_areal_forcing(year,month,day,hour,tair,raw_precip,raw_pet,psfall,hru_id(nh)) 
 
     ! apply PEADJ and PXADJ (scaling the input values)
     pet    = raw_pet * peadj(nh)
