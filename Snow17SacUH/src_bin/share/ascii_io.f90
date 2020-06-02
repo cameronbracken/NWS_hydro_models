@@ -571,7 +571,7 @@ subroutine read_snow17_params(param_file_name,n_hrus)
         case ('hru_id')
           ! do nothing, already stored it
           n_params_read = n_params_read + 1
-        case ('latitude')
+        case ('alat')
           read(readline, *, iostat=ios) latitude
           n_params_read = n_params_read + 1
         case ('elev')
